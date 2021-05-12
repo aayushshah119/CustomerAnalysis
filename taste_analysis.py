@@ -168,9 +168,11 @@ class TasteAnalysis:
                         repeat_customers += 1
                         new_customers.remove(customer)
 
+
             total_orders = 0
             for customer in new_customers:
                 total_orders += self.customers[customer]
+
 
             if len(new_customers) == 0:
                 buy_avg = "-"

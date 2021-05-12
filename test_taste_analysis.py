@@ -141,7 +141,14 @@ class TestTasteAnalysis:
             analyzer = TasteAnalysis(TestTasteAnalysis.PARTIAL_CSV_PATH)
             weekly_cohort_analysis = analyzer.print_weekly_cohort_analysis()
 
-            
+            assert len(weekly_cohort_analysis) == 15
+            assert weekly_cohort_analysis[1][0] == "2020-04-18"
+            assert str(weekly_cohort_analysis[1][1]) == "35"
+            assert weekly_cohort_analysis[1][2] == "0 (0%)"
+            assert weekly_cohort_analysis[1][3] == "35 (100%)"
+            assert str(weekly_cohort_analysis[1][4]) == "1.26"
+            assert str(weekly_cohort_analysis[2][4]) == "1.0"
+
 
             print("PASSED: test_partial_weekly_cohort_analysis")
             return True
@@ -149,9 +156,6 @@ class TestTasteAnalysis:
             print("*****FAILED*****: test_tiny_weekly_cohort_analysis")
             return False
 
-    """
-    Write your other tests in this section
-    """
 
 
 tta = TestTasteAnalysis()
