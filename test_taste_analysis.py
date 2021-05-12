@@ -8,15 +8,15 @@ class TestTasteAnalysis:
 
     def run_tests(self):
         if (
-            self.test_tiny_init()
-            and self.test_tiny_best_customers()
-            and self.test_tiny_customer_repeat_rate()
-            and self.test_tiny_weekly_cohort_analysis()
-            and self.test_partial_init()
-            and self.test_partial_best_customers()
-            and self.test_partial_customer_repeat_rate()
-            and self.test_partial_weekly_cohort_analysis()
-            
+                self.test_tiny_init()
+                and self.test_tiny_best_customers()
+                and self.test_tiny_customer_repeat_rate()
+                and self.test_tiny_weekly_cohort_analysis()
+                and self.test_partial_init()
+                and self.test_partial_best_customers()
+                and self.test_partial_customer_repeat_rate()
+                and self.test_partial_weekly_cohort_analysis()
+
         ):
             print("\n\n=====CONGRATULATIONS! ALL TESTS PASSED!=====\n\n")
         else:
@@ -73,7 +73,6 @@ class TestTasteAnalysis:
             analyzer = TasteAnalysis(TestTasteAnalysis.TINY_CSV_PATH)
             weekly_cohort_analysis = analyzer.print_weekly_cohort_analysis()
 
-
             assert len(weekly_cohort_analysis) == 15
             assert weekly_cohort_analysis[1][0] == "2020-04-18"
             assert str(weekly_cohort_analysis[1][1]) == "35"
@@ -85,7 +84,6 @@ class TestTasteAnalysis:
         except AssertionError:
             print("*****FAILED*****: test_tiny_weekly_cohort_analysis")
             return False
-
 
     PARTIAL_CSV_PATH = "test_partial_customers.csv"
 
@@ -154,7 +152,6 @@ class TestTasteAnalysis:
     """
     Write your other tests in this section
     """
-
 
 
 tta = TestTasteAnalysis()

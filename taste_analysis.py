@@ -3,8 +3,6 @@ import csv
 from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 from tabulate import tabulate
-from dateutil.tz import gettz
-from dateutil.parser import parse
 from datetime import datetime
 from typing import Dict, Any, List, Tuple
 import sys
@@ -15,11 +13,24 @@ class TasteAnalysis:
     FIRST_COHORT_START = "2020-04-18 00:00 UTC"
     BEST_CUSTOMER_MIN = 2  # Min is 2 orders
 
+    weeks = [datetime.strptime("2020-04-18", '%Y-%m-%d').date(), datetime.strptime("2020-04-25", '%Y-%m-%d').date(),
+             datetime.strptime("2020-05-02", '%Y-%m-%d').date(), datetime.strptime("2020-05-09", '%Y-%m-%d').date(),
+             datetime.strptime("2020-05-16", '%Y-%m-%d').date(), datetime.strptime("2020-05-23", '%Y-%m-%d').date(),
+             datetime.strptime("2020-05-30", '%Y-%m-%d').date(), datetime.strptime("2020-06-06", '%Y-%m-%d').date(),
+             datetime.strptime("2020-06-13", '%Y-%m-%d').date(), datetime.strptime("2020-06-20", '%Y-%m-%d').date(),
+             datetime.strptime("2020-06-27", '%Y-%m-%d').date(), datetime.strptime("2020-07-04", '%Y-%m-%d').date(),
+             datetime.strptime("2020-07-11", '%Y-%m-%d').date(), datetime.strptime("2020-07-18", '%Y-%m-%d').date(),
+             ]
+
+    weeks_dict = dict.fromkeys(weeks)
+    for i in range(len(weeks)):
+        weeks_dict[weeks[i]] = set()
+
     """
     Reads in the CSV file and sets member variables as needed
     """
 
-    def __init__(self, path: str) -> None:
+    def __init__(self, path):
         print(f"Processing csv at: {path}")
         self.row_count = 0
         self.customers = {}
@@ -36,11 +47,14 @@ class TasteAnalysis:
                     self.customers[row['Email']] = 1
 
                 date_obj = datetime.strptime(row['Created (UTC)'], '%m/%d/%y %H:%M').date()
-                if date_obj in self.dates:
-                    self.dates[date_obj] += [row['Email']]
-                else:
-                    self.dates[date_obj] = [row['Email']]
-
+                for i in range(len(self.weeks)):
+                    if i + 1 != len(self.weeks):
+                        if self.weeks[i] <= date_obj < self.weeks[i + 1]:
+                            self.weeks_dict[self.weeks[i]].add(row['Email'])
+                            break
+                    else:
+                        if self.weeks[i] <= date_obj:
+                            self.weeks_dict[self.weeks[i]].add(row['Email'])
 
         for customer in self.customers:
             if self.customers[customer] in self.frequency_count:
@@ -100,12 +114,12 @@ class TasteAnalysis:
     def print_customer_repeat_rate(self) -> List[List[Any]]:
         print("=====CUSTOMER REPEAT RATE=====")
         table: List[List[Any]] = []
-        table += [ ["Total Purchases Count", self.row_count] ]
-        table += [ ["Unique Customers", len(self.customers)] ]
+        table += [["Total Purchases Count", self.row_count]]
+        table += [["Unique Customers", len(self.customers)]]
 
-        for i in range(1,self.row_count):
+        for i in range(1, self.row_count):
             if i in self.frequency_count:
-                table += [ [str(i) + " Count", self.frequency_count[i]] ]
+                table += [[str(i) + " Count", self.frequency_count[i]]]
 
         print(tabulate(table))
         print("\n\n")
@@ -135,48 +149,22 @@ class TasteAnalysis:
         # calculate repeat purchases by cohort
         print("=====WEEKLY COHORT ANALYSIS=====")
 
-        weeks_dict = {}
-        table = []
-        table.append(
-            [
-                "Cohort Start Date",
-                "Total Cohort Customers",
-                "Repeat Customers (%)",
-                "New Customers (%)",
-                "Buy Avg",
-            ]
-        )
+        table = [[
+            "Cohort Start Date",
+            "Total Cohort Customers",
+            "Repeat Customers (%)",
+            "New Customers (%)",
+            "Buy Avg",
+        ]]
 
-        weeks = [datetime.strptime("2020-04-18", '%Y-%m-%d').date(), datetime.strptime("2020-04-25", '%Y-%m-%d').date(),
-                 datetime.strptime("2020-05-02", '%Y-%m-%d').date(), datetime.strptime("2020-05-09", '%Y-%m-%d').date(),
-                 datetime.strptime("2020-05-16", '%Y-%m-%d').date(), datetime.strptime("2020-05-23", '%Y-%m-%d').date(),
-                 datetime.strptime("2020-05-30", '%Y-%m-%d').date(), datetime.strptime("2020-06-06", '%Y-%m-%d').date(),
-                 datetime.strptime("2020-06-13", '%Y-%m-%d').date(), datetime.strptime("2020-06-20", '%Y-%m-%d').date(),
-                 datetime.strptime("2020-06-27", '%Y-%m-%d').date(), datetime.strptime("2020-07-04", '%Y-%m-%d').date(),
-                 datetime.strptime("2020-07-11", '%Y-%m-%d').date(), datetime.strptime("2020-07-18", '%Y-%m-%d').date(),
-                ]
-
-
-        for i in range(len(weeks)):
-            weeks_dict[weeks[i]] = set()
-            for date in self.dates:
-                if i + 1 != len(weeks):
-                    if weeks[i] <= date < weeks[i+1]:
-                        for entry in self.dates[date]:
-                            weeks_dict[weeks[i]].add(entry)
-                else:
-                    if weeks[i] <= date:
-                        for entry in self.dates[date]:
-                            weeks_dict[weeks[i]].add(entry)
-
-
-        for i in range(len(weeks)):
-            total_customers = len(weeks_dict[weeks[i]])
+        for i in range(len(self.weeks)):
+            total_customers = len(self.weeks_dict[self.weeks[i]])
             repeat_customers = 0
-            new_customers = set.copy(weeks_dict[weeks[i]])
-            for customer in weeks_dict[weeks[i]]:
+            new_customers = set.copy(self.weeks_dict[self.weeks[i]])
+
+            for customer in self.weeks_dict[self.weeks[i]]:
                 for j in range(i):
-                    if customer in weeks_dict[weeks[j]]:
+                    if customer in self.weeks_dict[self.weeks[j]]:
                         repeat_customers += 1
                         new_customers.remove(customer)
 
@@ -187,19 +175,19 @@ class TasteAnalysis:
             if len(new_customers) == 0:
                 buy_avg = "-"
             else:
-                buy_avg = round(total_orders/len(new_customers), 2)
+                buy_avg = round(total_orders / len(new_customers), 2)
 
             if total_customers != 0:
-                repeat_customers_per = 100 * repeat_customers//total_customers
+                repeat_customers_per = 100 * repeat_customers // total_customers
                 repeat_customers_str = f"{repeat_customers} ({repeat_customers_per}%)"
 
-                new_customers_per = 100 * len(new_customers)//total_customers
+                new_customers_per = 100 * len(new_customers) // total_customers
                 new_customers_str = f"{len(new_customers)} ({new_customers_per}%)"
             else:
                 repeat_customers_str = "0"
                 new_customers_str = "0"
 
-            table.append([str(weeks[i]), str(total_customers),repeat_customers_str, new_customers_str, buy_avg])
+            table.append([str(self.weeks[i]), str(total_customers), repeat_customers_str, new_customers_str, buy_avg])
 
         print(tabulate(table, headers="firstrow"))
         return table
@@ -214,6 +202,3 @@ if __name__ == "__main__":
 
         analyzer = TasteAnalysis(csv_path)
         analyzer.gen_reports()
-
-
-
